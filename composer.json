@@ -1,0 +1,21 @@
+{
+    "name": "majorbio/rpc",
+    "description": "RPC",
+    "authors": [
+        {
+            "name": "test",
+            "email": "test@majorbio.com"
+        }
+    ],
+    "require": {
+        "php": "^7.4",
+        "guzzlehttp/guzzle": "^7.4",
+        "workerman/workerman": "^4.0"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "majorbio\\rpc\\": "src"
+        }
+    }
+}
