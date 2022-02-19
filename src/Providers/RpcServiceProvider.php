@@ -28,7 +28,7 @@ class RpcServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__ . '/../Publishes/config.php' => config_path('rpcc.php'),
+                __DIR__ . '/../Publishes/config.php' => config_path('rpc.php'),
                 __DIR__ . '/../Publishes/Rpc.php' => app_path('Console/Commands/Rpc.php'),
             ]);
         }
