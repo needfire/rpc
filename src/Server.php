@@ -2,6 +2,7 @@
 
 namespace majorbio\rpc;
 
+use Illuminate\Support\Facades\Log;
 use Workerman\Worker;
 use Workerman\Connection\TcpConnection;
 use Workerman\Lib\Timer;
@@ -72,7 +73,7 @@ class Server
      */
     public function onWorkerStart()
     {
-        echo "Worker " . $this->worker->id . " starting...\n";
+        Log::write('info', "Worker " . $this->worker->id . " starting...\n");
 
         // 每个 worker 每 n 秒一次检测
         Timer::add(30, function () {
@@ -82,7 +83,7 @@ class Server
                 foreach ($this->instanceKeepers as $connectionId => $instanceKeeper) {
                     // 如果超过 180 秒无更新的话，则释放资源
                     if (time() - $instanceKeeper->getLastMessageTime() > 180) {
-                        echo "清理 " . $this->worker->id . " 资源\n";
+                        // echo "清理 " . $this->worker->id . " 资源\n";
                         unset($this->instanceKeepers[$connectionId]);
                     }
                 }
@@ -99,7 +100,7 @@ class Server
      */
     public function onConnect(TcpConnection $connection)
     {
-        echo "新链接 ip " . $connection->getRemoteIp() . "\n";
+        // echo "新链接 ip " . $connection->getRemoteIp() . "\n";
 
         // 创建当前链接的 instanceKeeper
         $this->instanceKeepers[$connection->id] = new InstanceKeeper();
@@ -171,8 +172,7 @@ class Server
         if (isset($this->instanceKeepers[$connection->id])) {
             unset($this->instanceKeepers[$connection->id]);
         }
-
-        echo "connection closed\n";
+        // echo "connection closed\n";
     }
 
     /**
@@ -182,7 +182,7 @@ class Server
      */
     function onError()
     {
-        echo "error\n";
+        Log::write('info', "Worker " . $this->worker->id . " error...\n");
     }
 
     /**
