@@ -1,6 +1,11 @@
+# Laravel 的 RPC 框架
 # 安装
 ```bash
+# 安装
 composer require majorbio/rpc
+
+# 发布配置文件
+php artisan vendor:publish --provider="majorbio\rpc\Providers\RpcServiceProvider"
 ```
 
 
@@ -54,10 +59,9 @@ class Calculator
     }
 }
 
-
 ```
 
-3. 创建命令行启动程序 /app/Console/Commands/Rpc.php
+3. 命令行程序 /app/Console/Commands/Rpc.php
 ```php
 <?php
 
