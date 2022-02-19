@@ -17,5 +17,12 @@
         "psr-4": {
             "majorbio\\rpc\\": "src"
         }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "majorbio\\rpc\\Providers\\RpcServiceProvider"
+            ]
+        }
     }
 }
