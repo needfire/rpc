@@ -6,7 +6,8 @@ use Illuminate\Support\ServiceProvider;
 
 class RpcServiceProvider extends ServiceProvider
 {
-    protected $defer = true; // 延迟加载服务
+    // 延迟加载服务
+    protected $defer = true;
 
     /**
      * Register services.
