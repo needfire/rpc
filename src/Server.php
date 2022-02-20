@@ -132,7 +132,7 @@ class Server
 
         // 类是否存在
         if (!class_exists($class)) {
-            $connection->send($this->rs(404, 'class not exist'));
+            $connection->send($this->rs(404, 'class ' . $class . ' not exist'));
             return;
         }
 
@@ -144,7 +144,7 @@ class Server
 
         // 方法是否存在
         if (!method_exists($this->instanceKeepers[$connection->id]->get($class), $method)) {
-            $connection->send($this->rs(404, 'method not exist'));
+            $connection->send($this->rs(404, 'method ' . $method . ' not exist'));
             return;
         }
 
@@ -152,10 +152,14 @@ class Server
         $rs = $this->instanceKeepers[$connection->id]->get($class)->$method(...$params);
         // var_dump($rs);
         if (empty($rs)) {
-            $rs = $this->rs(0, 'ok');
+            $rs = [
+                'code' => 0,
+                'message' => 'ok',
+                'data' => ['invoke ' . $class . '@' . $method . ' success'],
+            ];
         }
 
-        // 相应客户端
+        // 发给此客户端
         $connection->send($rs);
     }
 
