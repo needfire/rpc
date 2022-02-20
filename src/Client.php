@@ -47,6 +47,21 @@ class Client
     }
 
     /**
+     * 设置读长
+     *
+     * @param integer $readLength
+     * 
+     * @return void
+     */
+    public function setReadLength(int $readLength = 0)
+    {
+        if ($readLength < 1024) {
+            $readLength = 8790;
+        }
+        $this->readLength = $readLength;
+    }
+
+    /**
      * 调用 RPC 方法
      *
      * @param string $class
@@ -70,6 +85,11 @@ class Client
 
         // 得到结果
         $msg = socket_read($this->socket, $this->readLength);
+        if ($msg === false) {
+            $errorCode = socket_last_error();
+            $errorMessage = socket_strerror($errorCode);
+            throw new Exception($errorMessage, $errorCode);
+        }
         return json_decode(trim($msg), true);
     }
 
