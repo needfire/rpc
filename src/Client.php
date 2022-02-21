@@ -72,25 +72,51 @@ class Client
      */
     public function invoke(string $class = '', string $method = '', array $params = [])
     {
-        // 组装
-        $command = json_encode([
+        // 打包
+        $dataPackageString = $this->encode([
             'class' => trim($class),
             'method' => trim($method),
             'params' => $params,
             'dateTime' => date('Y-m-d H:i:s'),
-        ]) . "\n";
+        ]);
+        // dd($dataPackageString, $this->decode($dataPackageString));
 
         // 向 socket 写入数据（发送数据）
-        socket_write($this->socket, $command, strlen($command));
+        socket_write($this->socket, $dataPackageString, strlen($dataPackageString));
 
-        // 得到结果
-        $msg = socket_read($this->socket, $this->readLength);
-        if ($msg === false) {
-            $errorCode = socket_last_error();
-            $errorMessage = socket_strerror($errorCode);
-            throw new Exception($errorMessage, $errorCode);
+        // 头部标识
+        $readHead = true;
+        // 第一次头部读长
+        $readLength = 10;
+
+        // 循环读取
+        while ($data = socket_read($this->socket, $readLength)) {
+            // 异常
+            if ($data === false) {
+                $errorCode = socket_last_error();
+                $errorMessage = socket_strerror($errorCode);
+                throw new Exception($errorMessage, $errorCode);
+            }
+            // 读取包头
+            if ($readHead) {
+                $readHead = false;
+                // 解析包总长（ps 如果包总长太大的话，就要分段去读取了，比如每次读取 1M 数据。）
+                $totalLength = base_convert(substr($data, 0, 10), 10, 10);
+                $totalLength = intval($totalLength);
+                // 不够
+                if ($totalLength < 10) {
+                    $data = $this->rs(0, 'ok');
+                    break;
+                }
+                // 重新赋值长度
+                $readLength = $totalLength - 10;
+                //
+                continue;
+            }
+            break;
         }
-        return json_decode(trim($msg), true);
+
+        return $this->decode($data);
     }
 
     /**
@@ -101,5 +127,55 @@ class Client
     public function disconnect()
     {
         socket_close($this->socket);
+    }
+
+    /**
+     * 打包，当向客户端发送数据的时候会自动调用
+     * 
+     * @param string $buffer
+     * 
+     * @return string
+     */
+    public function encode($buffer)
+    {
+        // 包体
+        $buffer = json_encode($buffer);
+        // 总长度 = 包头 + 包体
+        $totalLength = 10 + strlen($buffer);
+        // 转化为字符串，不够 10 位则左补 0
+        $totalLengthString = str_pad($totalLength, 10, '0', STR_PAD_LEFT);
+        // 返回数据包
+        return $totalLengthString . $buffer;
+    }
+
+    /**
+     * 解包，当接收到的数据字节数等于 input 返回的值（大于0的值）自动调用
+     * 并传递给 onMessage 回调函数的 $data 参数
+     * 
+     * @param string $buffer
+     * 
+     * @return string
+     */
+    public function decode($buffer)
+    {
+        return json_decode($buffer, true);
+    }
+
+    /**
+     * 返回数据结构
+     *
+     * @param integer $code
+     * @param string $message
+     * @param mixed $data
+     * 
+     * @return string
+     */
+    public function rs(int $code = 0, string $message = '', $data = []): string
+    {
+        return json_encode([
+            'code' => $code,
+            'message' => $message,
+            'data' => $data,
+        ]) . "\n";
     }
 }
