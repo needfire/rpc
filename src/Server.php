@@ -230,14 +230,14 @@ class Server
      * @param string $message
      * @param mixed $data
      * 
-     * @return string
+     * @return array
      */
-    public function rs(int $code = 0, string $message = '', $data = []): string
+    public function rs(int $code = 0, string $message = '', $data = []): array
     {
-        return json_encode([
+        return [
             'code' => $code,
             'message' => $message,
             'data' => $data,
-        ]) . "\n";
+        ];
     }
 }
