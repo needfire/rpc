@@ -3,6 +3,7 @@
 namespace majorbio\rpc;
 
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class Client
 {
@@ -11,8 +12,6 @@ class Client
     protected string $host = '';
     // 端口
     protected int $port = 0;
-    // 读长
-    protected int $readLength = 8790;
 
     /**
      * 构造函数
@@ -22,12 +21,11 @@ class Client
      * 
      * @throws Exception
      */
-    public function __construct(string $host = '127.0.0.1', int $port = 30106, int $readLength = 8790)
+    public function __construct(string $host = '127.0.0.1', int $port = 30106)
     {
         // 参数
         $this->host = $host;
         $this->port = $port;
-        $this->readLength = $readLength;
 
         // 创建 socket
         $this->socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
@@ -44,21 +42,6 @@ class Client
             $errorMessage = socket_strerror($errorCode);
             throw new Exception($errorMessage, $errorCode);
         }
-    }
-
-    /**
-     * 设置读长
-     *
-     * @param integer $readLength
-     * 
-     * @return void
-     */
-    public function setReadLength(int $readLength = 0)
-    {
-        if ($readLength < 1024) {
-            $readLength = 8790;
-        }
-        $this->readLength = $readLength;
     }
 
     /**
@@ -103,6 +86,7 @@ class Client
                 // 解析包总长（ps 如果包总长太大的话，就要分段去读取了，比如每次读取 1M 数据。）
                 $totalLength = base_convert(substr($data, 0, 10), 10, 10);
                 $totalLength = intval($totalLength);
+                // var_dump($totalLength);
                 // 不够
                 if ($totalLength < 10) {
                     $data = $this->rs(0, 'ok');
@@ -115,7 +99,7 @@ class Client
             }
             break;
         }
-
+        Log::write('info', $data);
         return $this->decode($data);
     }
 
@@ -176,6 +160,6 @@ class Client
             'code' => $code,
             'message' => $message,
             'data' => $data,
-        ]) . "\n";
+        ]);
     }
 }
