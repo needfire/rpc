@@ -1,4 +1,16 @@
 # Laravel 的 RPC 框架
+- 基于 workerman 的多进程 RPC 框架
+- 状态可维持，支持多次调用
+
+<br>
+
+# 数据包样本
+- 首部固定 10 个字节长度用来保存整个数据包长度，位数不够左补 0
+- 数据格式为 json 字符串
+```bash
+0000000068{"code":0,"message":"ok","data":["hello world, hello u!"]}
+```
+
 # 安装
 ```bash
 # 安装
