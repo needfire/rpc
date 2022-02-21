@@ -4,14 +4,14 @@
 
 <br>
 
-# 数据包样本
+## 数据包样本
 - 首部固定 10 个字节长度用来保存整个数据包长度，位数不够左补 0
 - 数据格式为 json 字符串
 ```bash
 0000000068{"code":0,"message":"ok","data":["hello world, hello u!"]}
 ```
 
-# 安装
+## 安装
 ```bash
 # 安装
 composer require majorbio/rpc
@@ -20,9 +20,11 @@ composer require majorbio/rpc
 php artisan vendor:publish --provider="majorbio\rpc\Providers\RpcServiceProvider"
 ```
 
+<br>
+<br>
 
 # Server 服务端
-1. 配置 /config/rpc.php
+一、 配置 /config/rpc.php
 ```php
 <?php
 
@@ -44,7 +46,7 @@ return [
 ];
 ```
 
-2. 创建 RPC 服务 /app/Rpc/Calculator.php
+二、创建 RPC 服务 /app/Rpc/Calculator.php
 ```php
 <?php
 
@@ -65,80 +67,21 @@ class Calculator
         $this->b = $b;
     }
 
-    public function add()
+    public function sum()
     {
-        return ['code' => 0, 'message' => 'ERP-Rpc-Calculator', 'data' => [$this->a + $this->b]];
+        return ['code' => 0, 'message' => 'Calculator-sum', 'data' => [$this->a + $this->b]];
     }
 }
 
 ```
 
-3. 命令行程序 /app/Console/Commands/Rpc.php
-```php
-<?php
-
-namespace App\Console\Commands;
-
-use Illuminate\Console\Command;
-use majorbio\rpc\Server;
-use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Output\ConsoleOutput;
-
-class Rpc extends Command
-{
-    /**
-     * 命令描述
-     *
-     * @var string
-     */
-    protected $description = '启动 RPC 服务: php artisan rpc start';
-
-    /**
-     * RPC 服务
-     * 
-     * @return void
-     */
-    protected function configure()
-    {
-        $this->setName('rpc')
-            ->addArgument('action', InputArgument::REQUIRED, 'start|stop|restart|reload|status|connections');
-    }
-
-    /**
-     * 执行
-     * 
-     * @param \Symfony\Component\Console\Output\ConsoleOutput $output
-     *
-     * @return void
-     */
-    public function handle(ConsoleOutput $output)
-    {
-        // 配置
-        $config = config('rpc');
-        if (!is_array($config) || empty($config)) {
-            $output->writeln("<error>没有找到配置文件 /config/rpc.php 请参照如下示例:</error>");
-            return false;
-        }
-
-        // 参数 action
-        $action = $this->argument('action');
-        if (!in_array($action, ['start', 'stop', 'reload', 'restart', 'status', 'connections'])) {
-            $output->writeln("<error>Invalid argument action:{$action}, Expected start|stop|restart|reload|status|connections .</error>");
-            return false;
-        }
-
-        // 启动
-        $server = new Server($config);
-        $server->start();
-    }
-}
-```
-
-4. 运行 RPC 服务
+三、运行 RPC 服务
 ```bash
 php artisan rpc start
 ```
 
+<br>
+<br>
 
 # Client 客户端
 ```php
@@ -153,9 +96,8 @@ $rpcClient->invoke('Calculator', 'setA', [5]);
 
 $rpcClient->invoke('Calculator', 'setB', [3]);
 
-var_dump('Calculator-add-');
-var_dump($rpcClient->invoke('Calculator', 'add'));
+var_dump('Calculator-sum-');
+var_dump($rpcClient->invoke('Calculator', 'sum'));
 
 $rpcClient->disconnect();
-
 ```
