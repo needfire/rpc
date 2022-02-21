@@ -7,7 +7,7 @@ use Workerman\Worker;
 use Workerman\Connection\TcpConnection;
 use Workerman\Lib\Timer;
 
-include_once __DIR__ . '/Protocols/JsonNL.php';
+include_once __DIR__ . '/Protocols/LenJson.php';
 
 class Server
 {
@@ -50,7 +50,7 @@ class Server
         }
 
         // 实例化
-        $this->worker = new Worker('JsonNL://0.0.0.0:' . $this->port, $this->context);
+        $this->worker = new Worker('LenJson://0.0.0.0:' . $this->port, $this->context);
 
         // 启动数量
         $this->worker->count = $this->count;
