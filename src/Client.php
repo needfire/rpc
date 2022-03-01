@@ -3,7 +3,6 @@
 namespace majorbio\rpc;
 
 use Exception;
-use Illuminate\Support\Facades\Log;
 
 class Client
 {
@@ -71,15 +70,19 @@ class Client
         $readHead = true;
         // 第一次头部读长
         $readLength = 10;
+        // 数据体
+        $body = '';
 
         // 循环读取
         while ($data = socket_read($this->socket, $readLength)) {
+
             // 异常
             if ($data === false) {
                 $errorCode = socket_last_error();
                 $errorMessage = socket_strerror($errorCode);
                 throw new Exception($errorMessage, $errorCode);
             }
+
             // 读取包头
             if ($readHead) {
                 $readHead = false;
@@ -97,10 +100,22 @@ class Client
                 //
                 continue;
             }
-            break;
+
+            // 保存本次读取的数据
+            $body .= $data;
+
+            // 本次接收到的数据长度 === 期望读取的长度
+            $thisReadLength = strlen($data);
+            if ($thisReadLength === $readLength) {
+                // 证明接受完毕，停止接受
+                break;
+            }
+
+            // 本次接收到的数据长度 < 期望读取的长度，则计算出还剩多少
+            $readLength -= $thisReadLength;
         }
-        Log::write('info', $data);
-        return $this->decode($data);
+        // 解压
+        return $this->decode($body);
     }
 
     /**
