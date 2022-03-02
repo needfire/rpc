@@ -69,7 +69,7 @@ class Calculator
 
     public function sum()
     {
-        return ['code' => 0, 'message' => 'Calculator-sum', 'data' => [$this->a + $this->b]];
+        return ['code' => 0, 'message' => 'Calculator-sum', 'data' => $this->a + $this->b];
     }
 }
 
