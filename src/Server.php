@@ -155,8 +155,8 @@ class Server
         if (empty($rs)) {
             $rs = [
                 'code' => 0,
-                'message' => 'ok',
-                'data' => ['invoke ' . $class . '@' . $method . ' success'],
+                'message' => 'invoke ' . $data['class'] . '@' . $method . ' success',
+                'data' => null,
             ];
         }
 
