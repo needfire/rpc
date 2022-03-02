@@ -15,6 +15,7 @@ class Server
     protected $port = '30106';
     protected $count = 4;
     protected $name = 'MajorbioRpc';
+    /** @var InstanceKeeper[] $instanceKeepers */
     protected $instanceKeepers = [];
     protected $pidFile = '';
     protected $logFile = '';
@@ -82,7 +83,7 @@ class Server
                 /** @var InstanceKeeper $instanceKeeper */
                 foreach ($this->instanceKeepers as $connectionId => $instanceKeeper) {
                     // 如果超过 180 秒无更新的话，则释放资源
-                    if (time() - $instanceKeeper->getLastMessageTime() > 180) {
+                    if (time() - $instanceKeeper->getLastInvokeTime() > 180) {
                         // echo "清理 " . $this->worker->id . " 资源\n";
                         unset($this->instanceKeepers[$connectionId]);
                     }
@@ -123,7 +124,7 @@ class Server
         }
 
         // 更新最后通讯时间
-        $this->instanceKeepers[$connection->id]->updateLastMessageTime();
+        $this->instanceKeepers[$connection->id]->updateLastInvokeTime();
 
         // 类、方法、参数
         $class = $this->rpcNameSpace . $data['class'];
@@ -139,7 +140,7 @@ class Server
         // 容器中如果没有此实例
         if (!$this->instanceKeepers[$connection->id]->has($class)) {
             // 则实例化
-            $this->instanceKeepers[$connection->id]->add($class, new $class());
+            $this->instanceKeepers[$connection->id]->set($class, new $class());
         }
 
         // 方法是否存在
