@@ -4,37 +4,82 @@ namespace majorbio\rpc;
 
 class InstanceKeeper
 {
-    private int $lastMessageTime = 0;
+    /**
+     * 最后调用时间
+     *
+     * @var integer
+     */
+    private int $lastInvokeTime = 0;
 
-    private array $objects = [];
+    /**
+     * 实例
+     *
+     * @var array
+     */
+    private array $instances = [];
 
+    /**
+     * 构造
+     */
     public function __construct()
     {
-        $this->updateLastMessageTime();
+        $this->updateLastInvokeTime();
     }
 
-    public function updateLastMessageTime()
+    /**
+     * 更新最后调用时间
+     *
+     * @return void
+     */
+    public function updateLastInvokeTime()
     {
-        $this->lastMessageTime = time();
+        $this->lastInvokeTime = time();
     }
 
-    public function getLastMessageTime()
+    /**
+     * 获取最后调用时间
+     *
+     * @return int
+     */
+    public function getLastInvokeTime(): int
     {
-        return $this->lastMessageTime;
+        return $this->lastInvokeTime;
     }
 
-    public function add(string $name = '', object $instance)
+    /**
+     * 设置实例
+     *
+     * @param string $name
+     * @param object $instance
+     * 
+     * @return void
+     */
+    public function set(string $name = '', object $instance)
     {
-        $this->objects[$name] = $instance;
+        $this->instances[$name] = $instance;
     }
 
-    public function has(string $name = '')
+    /**
+     * 实例是否存在
+     *
+     * @param string $name
+     * 
+     * @return boolean
+     */
+    public function has(string $name = ''): bool
     {
-        return isset($this->objects[$name]);
+        return isset($this->instances[$name]);
     }
 
-    public function get(string $name = '')
+    /**
+     * 获取实例
+     *
+     * @param string $name
+     * 
+     * @return object
+     */
+    public function get(string $name = ''): object
     {
-        return $this->objects[$name];
+        return $this->instances[$name];
     }
 }
