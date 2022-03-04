@@ -11,6 +11,8 @@ class Client
     protected string $host = '';
     // 端口
     protected int $port = 0;
+    // 如果没有得到预期结果，是否要抛出异常
+    protected bool $throwException = true;
 
     /**
      * 构造函数
@@ -41,6 +43,26 @@ class Client
             $errorMessage = socket_strerror($errorCode);
             throw new Exception($errorMessage, $errorCode);
         }
+    }
+
+    /**
+     * 开启抛出异常
+     *
+     * @return void
+     */
+    public function enableThrowException()
+    {
+        $this->throwException = true;
+    }
+
+    /**
+     * 关闭抛出异常
+     *
+     * @return void
+     */
+    public function disableThrowException()
+    {
+        $this->throwException = false;
     }
 
     /**
@@ -101,21 +123,30 @@ class Client
                 continue;
             }
 
-            // 保存本次读取的数据
+            // 记录本次读取的数据
             $body .= $data;
 
-            // 本次接收到的数据长度 === 期望读取的长度
             $thisReadLength = strlen($data);
+            // 本次接收到的数据长度 === 期望读取的长度
             if ($thisReadLength === $readLength) {
-                // 证明接受完毕，停止接受
+                // 则证明接收完毕
                 break;
             }
 
             // 本次接收到的数据长度 < 期望读取的长度，则计算出还剩多少
             $readLength -= $thisReadLength;
         }
+
         // 解压
-        return $this->decode($body);
+        $result = $this->decode($body);
+
+        // 是否要抛异常
+        if ($result['code'] > 0 && $this->throwException) {
+            throw new Exception($result['message'], $result['code']);
+        }
+
+        // 返回数据
+        return $result['data'];
     }
 
     /**
