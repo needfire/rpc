@@ -2,6 +2,8 @@
 
 namespace Protocols;
 
+use majorbio\helper\RS;
+
 /**
  * 数据包样本要求：
  * a. 首部固定 10 个字节长度用来保存整个数据包长度，位数不够补 0
@@ -21,7 +23,7 @@ class LenJson
      * 
      * @return int
      */
-    public static function input($buffer)
+    public static function input(string $buffer): int
     {
         if (strlen($buffer) < 10) {
             // 不够 10 字节，返回 0 继续等待数据
@@ -34,11 +36,11 @@ class LenJson
     /**
      * 打包，当向客户端发送数据的时候会自动调用
      * 
-     * @param string $buffer
+     * @param RS $buffer
      * 
      * @return string
      */
-    public static function encode($buffer)
+    public static function encode(RS $buffer): string
     {
         // 包体
         $buffer = json_encode($buffer);
@@ -56,11 +58,14 @@ class LenJson
      * 
      * @param string $buffer
      * 
-     * @return string
+     * @return RS
      */
-    public static function decode($buffer)
+    public static function decode(string $buffer): RS
     {
-        // 去掉前面 10 个字节的包头
-        return json_decode(substr($buffer, 10), true);
+        // 去掉前面 10 个字节的包头，转化为数组
+        $tmp = json_decode(substr($buffer, 10), true);
+        $buffer = new RS($tmp['code'] ?? 10404, $tmp['message'] ?? '没有信息', $tmp['data'] ?? null);
+        unset($tmp);
+        return $buffer;
     }
 }
