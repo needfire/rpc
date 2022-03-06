@@ -3,6 +3,7 @@
 namespace majorbio\rpc;
 
 use Exception;
+use majorbio\helper\RS;
 
 class Client
 {
@@ -77,12 +78,12 @@ class Client
     public function invoke(string $class = '', string $method = '', array $params = [])
     {
         // 打包
-        $dataPackageString = $this->encode([
+        $dataPackageString = $this->encode(new RS(0, 'ok', [
             'class' => trim($class),
             'method' => trim($method),
             'params' => $params,
             'dateTime' => date('Y-m-d H:i:s'),
-        ]);
+        ]));
         // dd($dataPackageString, $this->decode($dataPackageString));
 
         // 向 socket 写入数据（发送数据）
@@ -90,9 +91,11 @@ class Client
 
         // 头部标识
         $readHead = true;
-        // 第一次头部读长
+        // 第一次读长（头部）
         $readLength = 10;
-        // 数据体
+        // 包头
+        $head = '';
+        // 包体
         $body = '';
 
         // 循环读取
@@ -100,53 +103,66 @@ class Client
 
             // 异常
             if ($data === false) {
+                $head = $body = '';
                 $errorCode = socket_last_error();
                 $errorMessage = socket_strerror($errorCode);
                 throw new Exception($errorMessage, $errorCode);
             }
 
-            // 读取包头
+            // 处理读取到的数据
             if ($readHead) {
-                $readHead = false;
-                // 解析包总长（ps 如果包总长太大的话，就要分段去读取了，比如每次读取 1M 数据。）
-                $totalLength = base_convert(substr($data, 0, 10), 10, 10);
-                $totalLength = intval($totalLength);
-                // var_dump($totalLength);
-                // 不够
-                if ($totalLength < 10) {
-                    $data = $this->rs(0, 'ok');
-                    break;
+
+                // 读取“包头”
+                $head .= $data;
+
+                // 计算
+                $thisReadLength = strlen($head);
+                if ($thisReadLength === $readLength) {
+                    // 本次接收到的数据长度 === 期望读长，则说明接收完毕
+                    // 下一个循环读取的不再是“包头”了
+                    $readHead = false;
+                    // 解析包总长（ps 如果包总长太大的话，就要分段去读取了，比如每次读取 1M 数据。）
+                    $totalLength = base_convert(substr($head, 0, 10), 10, 10);
+                    $totalLength = intval($totalLength);
+                    $head = '';
+                    // 设置包体的读长
+                    $readLength = $totalLength - 10;
+                } else {
+                    // 本次接收到的数据长度 < 期望读长，则计算出包头还剩多少
+                    $readLength -= $thisReadLength;
                 }
-                // 重新赋值长度
-                $readLength = $totalLength - 10;
                 //
-                continue;
+
+            } else {
+
+                // 读取“包体”
+
+                // 记录本次读取的数据
+                $body .= $data;
+
+                // 计算
+                $thisReadLength = strlen($data);
+                if ($thisReadLength === $readLength) {
+                    // 本次接收到的数据长度 === 期望读取的长度，则说明接收完毕
+                    break;
+                } else {
+                    // 本次接收到的数据长度 < 期望读取的长度，则计算出还剩多少
+                    $readLength -= $thisReadLength;
+                }
             }
-
-            // 记录本次读取的数据
-            $body .= $data;
-
-            $thisReadLength = strlen($data);
-            // 本次接收到的数据长度 === 期望读取的长度
-            if ($thisReadLength === $readLength) {
-                // 则证明接收完毕
-                break;
-            }
-
-            // 本次接收到的数据长度 < 期望读取的长度，则计算出还剩多少
-            $readLength -= $thisReadLength;
         }
 
         // 解压
         $result = $this->decode($body);
+        unset($body);
 
         // 是否要抛异常
-        if ($result['code'] > 0 && $this->throwException) {
-            throw new Exception($result['message'], $result['code']);
+        if ($result->code > 0 && $this->throwException) {
+            throw new Exception($result->message, $result->code);
         }
 
         // 返回数据
-        return $result['data'];
+        return $result->data;
     }
 
     /**
@@ -162,11 +178,11 @@ class Client
     /**
      * 打包，当向客户端发送数据的时候会自动调用
      * 
-     * @param string $buffer
+     * @param RS $buffer
      * 
      * @return string
      */
-    public function encode($buffer)
+    public function encode(RS $buffer): string
     {
         // 包体
         $buffer = json_encode($buffer);
@@ -184,28 +200,13 @@ class Client
      * 
      * @param string $buffer
      * 
-     * @return string
+     * @return RS
      */
-    public function decode($buffer)
+    public function decode(string $buffer): RS
     {
-        return json_decode($buffer, true);
-    }
-
-    /**
-     * 返回数据结构
-     *
-     * @param integer $code
-     * @param string $message
-     * @param mixed $data
-     * 
-     * @return string
-     */
-    public function rs(int $code = 0, string $message = '', $data = []): string
-    {
-        return json_encode([
-            'code' => $code,
-            'message' => $message,
-            'data' => $data,
-        ]);
+        $obj = json_decode($buffer);
+        $buffer = new RS($obj->code ?? 10404, $obj->message ?? '没有信息', $obj->data ?? null);
+        unset($obj);
+        return $buffer;
     }
 }
