@@ -62,14 +62,14 @@ class Calculator
         $this->a = $a;
     }
 
-    public function setB(int $b = 0)
+    public function setB(int $b = 0, int $times = 5)
     {
-        $this->b = $b;
+        $this->b = $b * $times;
     }
 
     public function sum()
     {
-        return ['code' => 0, 'message' => 'Calculator-sum', 'data' => $this->a + $this->b];
+        return new RS(0, 'Calculator-sum', ($this->a + $this->b));
     }
 }
 
@@ -89,14 +89,14 @@ php artisan rpc start
 
 use majorbio\rpc\Client as RpcClient;
 
-// 创建 RpcClient
 $rpcClient = new RpcClient('127.0.0.1', 30106);
 
 $rpcClient->invoke('Calculator', 'setA', [5]);
 
-$rpcClient->invoke('Calculator', 'setB', [3]);
+$rpcClient->invoke('Calculator', 'setB', [3, 10]);
 
 var_dump($rpcClient->invoke('Calculator', 'sum'));
+// 结果 = 35
 
 $rpcClient->disconnect();
 ```
