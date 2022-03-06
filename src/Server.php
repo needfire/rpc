@@ -3,6 +3,7 @@
 namespace majorbio\rpc;
 
 use Illuminate\Support\Facades\Log;
+use majorbio\helper\RS;
 use Workerman\Worker;
 use Workerman\Connection\TcpConnection;
 use Workerman\Lib\Timer;
@@ -111,11 +112,11 @@ class Server
      * 回调函数 onMessage
      *
      * @param TcpConnection $connection
-     * @param mixed $data
+     * @param RS $obj
      * 
      * @return void
      */
-    public function onMessage(TcpConnection $connection, $data)
+    public function onMessage(TcpConnection $connection, RS $obj)
     {
         // 检查
         if (!isset($this->instanceKeepers[$connection->id])) {
@@ -127,13 +128,13 @@ class Server
         $this->instanceKeepers[$connection->id]->updateLastInvokeTime();
 
         // 类、方法、参数
-        $class = $this->rpcNameSpace . $data['class'];
-        $method = $data['method'];
-        $params = $data['params'];
+        $class = $this->rpcNameSpace . $obj->data['class'] ?? '';
+        $method = $obj->data['method'] ?? '';
+        $params = $obj->data['params'] ?? null;
 
         // 类是否存在
         if (!class_exists($class)) {
-            $connection->send($this->rs(404, 'class ' . $class . ' not exist'));
+            $connection->send(new RS(404, 'class ' . $class . ' not exist'));
             return;
         }
 
@@ -145,7 +146,7 @@ class Server
 
         // 方法是否存在
         if (!method_exists($this->instanceKeepers[$connection->id]->get($class), $method)) {
-            $connection->send($this->rs(404, 'method ' . $method . ' not exist'));
+            $connection->send(new RS(404, 'method ' . $method . ' not exist'));
             return;
         }
 
@@ -153,11 +154,7 @@ class Server
         $rs = $this->instanceKeepers[$connection->id]->get($class)->$method(...$params);
         // var_dump($rs);
         if (empty($rs)) {
-            $rs = [
-                'code' => 0,
-                'message' => 'invoke ' . $data['class'] . '@' . $method . ' success',
-                'data' => null,
-            ];
+            $rs = new RS(0, ('invoke ' . ($obj->data['class'] ?? '-') . '@' . $method . ' success'));
         }
 
         // 发给此客户端
@@ -222,23 +219,5 @@ class Server
     public function __call($method, $args)
     {
         call_user_func_array([$this->worker, $method], $args);
-    }
-
-    /**
-     * 返回数据结构
-     *
-     * @param integer $code
-     * @param string $message
-     * @param mixed $data
-     * 
-     * @return array
-     */
-    public function rs(int $code = 0, string $message = '', $data = []): array
-    {
-        return [
-            'code' => $code,
-            'message' => $message,
-            'data' => $data,
-        ];
     }
 }
