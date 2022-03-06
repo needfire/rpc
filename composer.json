@@ -9,6 +9,7 @@
     ],
     "require": {
         "php": "^7.4",
+        "majorbio/helper": "^1.0",
         "workerman/workerman": "^4.0"
     },
     "license": "MIT",
