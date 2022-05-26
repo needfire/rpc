@@ -152,9 +152,15 @@ class Server
 
         // 执行方法
         $rs = $this->instanceKeepers[$connection->id]->get($class)->$method(...$params);
-        // var_dump($rs);
+
+        // 如果结果为 empty，则使用 RS 包装一下
         if (empty($rs)) {
             $rs = new RS(0, ('invoke ' . ($obj->data['class'] ?? '-') . '@' . $method . ' success'));
+        }
+
+        // 如果不是 RS 示例，则使用 RS 包装一下
+        if (!$rs instanceof RS) {
+            $rs = new RS(0, ('invoke ' . ($obj->data['class'] ?? '-') . '@' . $method . ' success'), $rs);
         }
 
         // 发给此客户端
