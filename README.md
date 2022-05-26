@@ -52,24 +52,55 @@ return [
 
 namespace App\Rpc;
 
+use majorbio\helper\RS;
+
 class Calculator
 {
     public int $a = 1;
     public int $b = 2;
 
+    /**
+     * 设置 a
+     *
+     * @param int $a
+     *
+     * @return void
+     */
     public function setA(int $a = 0)
     {
         $this->a = $a;
     }
 
-    public function setB(int $b = 0, int $times = 5)
+    /**
+     * 设置 b
+     *
+     * @param int $a
+     *
+     * @return void
+     */
+    public function setB(int $b = 0)
     {
-        $this->b = $b * $times;
+        $this->b = $b;
     }
 
-    public function sum()
+    /**
+     * 求和
+     *
+     * @return RS
+     */
+    public function sum(): RS
     {
         return new RS(0, 'Calculator-sum', ($this->a + $this->b));
+    }
+
+    /**
+     * 相乘
+     *
+     * @return int
+     */
+    public function multiply(): int
+    {
+        return $this->a * $this->b;
     }
 }
 
@@ -89,14 +120,20 @@ php artisan rpc start
 
 use majorbio\rpc\Client as RpcClient;
 
+// 创建 RpcClient
 $rpcClient = new RpcClient('127.0.0.1', 30106);
 
+// 调用 setA 方法（注意传参是个数组）
 $rpcClient->invoke('Calculator', 'setA', [5]);
 
-$rpcClient->invoke('Calculator', 'setB', [3, 10]);
+// 调用 setB 方法（注意传参是个数组）
+$rpcClient->invoke('Calculator', 'setB', [3]);
 
+// 调用 sum 方法
 var_dump($rpcClient->invoke('Calculator', 'sum'));
-// 结果 = 35
+
+// 调用 multiply 方法
+var_dump($rpcClient->invoke('Calculator', 'multiply'));
 
 $rpcClient->disconnect();
 ```
