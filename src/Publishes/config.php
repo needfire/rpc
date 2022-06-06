@@ -10,9 +10,9 @@ return [
     // RPC 服务文件命名空间
     'rpcNameSpace' => '\\App\\Rpc\\',
     // 指定 workerman 的 pid 文件
-    'pidFile' => storage_path() . '/workerman/workerman.pid',
+    'pidFile' => storage_path() . '/workerman/rpc/workerman.pid',
     // 指定 workerman 的 log 文件
-    'logFile' => storage_path() . '/workerman/workerman.log',
+    'logFile' => storage_path() . '/workerman/rpc/workerman.log',
     // 省略 -d 参数
     'daemonize' => env('RPC_DAEMONIZE', false),
 ];
