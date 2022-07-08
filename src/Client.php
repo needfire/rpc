@@ -7,7 +7,7 @@ use majorbio\helper\RS;
 
 class Client
 {
-    private $socket;
+    private $socket = null;
     // 服务器
     protected string $host = '';
     // 端口
@@ -37,6 +37,12 @@ class Client
             throw new Exception($errorMessage, $errorCode);
         }
 
+        // 发送超时 10 秒
+        // socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 2, "usec" => 0));
+
+        // 接收超时 15 秒
+        // socket_set_option($this->socket, SOL_SOCKET, SO_SNDTIMEO, array("sec" => 30, "usec" => 0));
+
         // 连接
         $conn = socket_connect($this->socket, $this->host, $this->port);
         if ($conn === false) {
@@ -44,6 +50,16 @@ class Client
             $errorMessage = socket_strerror($errorCode);
             throw new Exception($errorMessage, $errorCode);
         }
+    }
+
+    /**
+     * 获取连接
+     *
+     * @return void
+     */
+    public function getSocket()
+    {
+        return $this->socket;
     }
 
     /**
@@ -69,9 +85,9 @@ class Client
     /**
      * 调用 RPC 方法
      *
-     * @param string $class
-     * @param string $method
-     * @param array $params
+     * @param string $class 类
+     * @param string $method 方法
+     * @param array $params 参数：[参数1, 参数2, ...]
      * 
      * @return mixed
      */
@@ -95,7 +111,7 @@ class Client
         $readLength = 10;
         // 包头
         $head = '';
-        // 包体
+        // 包体，最终是 {"code":0,"message":"","data":null} 数据结构
         $body = '';
 
         // 循环读取
@@ -150,6 +166,11 @@ class Client
                     $readLength -= $thisReadLength;
                 }
             }
+        }
+
+        // 如果连接断开
+        if ($data === false) {
+            throw new Exception('连接断开了。', 10555);
         }
 
         // 解压
