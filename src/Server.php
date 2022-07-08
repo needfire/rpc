@@ -78,7 +78,7 @@ class Server
         Log::write('info', "Worker " . $this->worker->id . " starting...\n");
 
         // 每个 worker 每 n 秒一次检测
-        Timer::add(30, function () {
+        Timer::add(10, function () {
             // 处理过期的
             if (!empty($this->instanceKeepers)) {
                 /** @var InstanceKeeper $instanceKeeper */
